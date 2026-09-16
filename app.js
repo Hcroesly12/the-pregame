@@ -12,26 +12,20 @@
   }
   try { const saved = sessionStorage.getItem('pregame-screen'); if (saved) show(saved); } catch (e) {}
 
-  // clips
-  const clips = [
-    ['ONE-HANDED GRAB IN THE END ZONE', 'Week 3 · #1 play of the week · Official team clip'],
-    ['62-YARD FIELD GOAL AT THE GUN', 'Week 3 · Walk-off winner · Official league clip'],
-    ['FRESHMAN QB SCRAMBLES FOR SIX', 'College · Saturday highlights · Official school clip'],
-    ['STRIP SACK TURNS THE GAME', 'High school · Friday night · Official school clip'],
-  ];
-  let ci = 0, playing = false, prog = 38, timer;
+  // clips (live.js fills window.pregameClips with real items)
+  let playing = false, prog = 0, timer;
   const bar = document.getElementById('clipBar');
   const playBtn = document.getElementById('clipPlay');
   const playSvg = playBtn ? playBtn.innerHTML : '';
+  window.pregameToast = toast;
   const pauseSvg = '<svg width="32" height="32" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="#fff"/></svg>';
   function setPlaying(p) {
     playing = p; playBtn.innerHTML = p ? pauseSvg : playSvg; clearInterval(timer);
-    if (p) timer = setInterval(() => { prog += 2; if (prog >= 100) nextClip(); bar.style.width = prog + '%'; }, 150);
+    if (p) timer = setInterval(() => { prog += 1; if (prog >= 100) nextClip(); bar.style.width = prog + '%'; }, 80);
   }
   function nextClip() {
-    ci = (ci + 1) % clips.length; prog = 0; bar.style.width = '0%';
-    document.getElementById('clipTitle').textContent = clips[ci][0];
-    document.getElementById('clipMeta').textContent = clips[ci][1];
+    prog = 0; bar.style.width = '0%';
+    if (window.pregameClips) window.pregameClips.next();
   }
 
   function act(t) {
@@ -40,6 +34,7 @@
       const i = [...el.parentElement.children].indexOf(el);
       const name = order[i];
       if (map[name]) show(map[name]); else toast('Profiles are coming soon');
+      document.dispatchEvent(new CustomEvent('pregame:screen', { detail: map[name] }));
       if (map[name] !== 'Clips' && playing) setPlaying(false);
       return;
     }
@@ -61,9 +56,11 @@
       const tabs = [...el.parentElement.children];
       const active = tabs.find(x => /#f2f2f0; color:#08090b/.test(x.getAttribute('style')));
       if (active && active !== el) { const a = active.getAttribute('style'); active.setAttribute('style', el.getAttribute('style')); el.setAttribute('style', a); }
+      document.dispatchEvent(new CustomEvent('pregame:tab', { detail: { row: el.parentElement.id, label: el.textContent.trim() } }));
       return;
     }
     if (t.closest('#clipPlay')) { setPlaying(!playing); return; }
+    if (t.closest('#clipLink')) return;
     if (t.closest('#clipStage')) { nextClip(); if (!playing) setPlaying(true); return; }
   }
   phone.addEventListener('click', e => act(e.target));
