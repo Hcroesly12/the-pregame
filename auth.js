@@ -61,8 +61,13 @@
       teams: [...phone.querySelectorAll('.team.picked')].map(labelOf),
     };
   }
+  function sharePicks(p) {
+    window.pregamePicks = p;
+    document.dispatchEvent(new CustomEvent('pregame:picks', { detail: p }));
+  }
   function applyPicks(p) {
     if (!p) return;
+    sharePicks(p);
     phone.querySelectorAll('.tile').forEach(t => t.classList.toggle('on', (p.sports || []).includes(labelOf(t))));
     phone.querySelectorAll('.team').forEach(t => t.classList.toggle('picked', (p.teams || []).includes(labelOf(t))));
   }
@@ -167,6 +172,7 @@
     if (letsGo && letsGo.closest('.screen[data-screen="Onboarding"]')) {
       e.stopPropagation();
       const picks = readPicks();
+      sharePicks(picks);
       if (user) { await savePicks(picks); show('Main'); return; }
       authSheet('up');
       afterAuth = async signedIn => { if (signedIn) await savePicks(picks); show('Main'); };
