@@ -55,10 +55,12 @@
 
   // ---------- picks ----------
   const labelOf = el => (el.querySelector('span') || el).textContent.trim();
+  const keyOf = el => el.dataset.key || labelOf(el);
+  const norm = k => (k.includes(':') ? k : 'NFL:' + k);
   function readPicks() {
     return {
       sports: [...phone.querySelectorAll('.tile.on')].map(labelOf),
-      teams: [...phone.querySelectorAll('.team.picked')].map(labelOf),
+      teams: [...phone.querySelectorAll('.team.picked')].map(keyOf),
     };
   }
   function sharePicks(p) {
@@ -69,7 +71,7 @@
     if (!p) return;
     sharePicks(p);
     phone.querySelectorAll('.tile').forEach(t => t.classList.toggle('on', (p.sports || []).includes(labelOf(t))));
-    phone.querySelectorAll('.team').forEach(t => t.classList.toggle('picked', (p.teams || []).includes(labelOf(t))));
+    phone.querySelectorAll('.team').forEach(t => t.classList.toggle('picked', (p.teams || []).map(norm).includes(keyOf(t))));
   }
   async function savePicks(p) {
     if (!user) return false;
@@ -143,7 +145,7 @@
         <h2 id="sheetTitle">Your account</h2>
         <p>${esc(user.email)}</p>
         <label>Sports</label><div class="chips">${chips(p && p.sports)}</div>
-        <label>Favorite teams</label><div class="chips">${chips(p && p.teams)}</div>
+        <label>Favorite teams</label><div class="chips">${chips(p && p.teams && p.teams.map(k => { const el = phone.querySelector(`.team[data-key="${norm(k)}"]`); return el ? el.title : k.split(':').pop(); }))}</div>
         <button class="btn" type="button" id="editPicks">Edit my picks</button>
         <button class="btn ghost" type="button" id="signOut">Sign out</button>`;
       wrap.hidden = false;
